@@ -1,65 +1,125 @@
+"use client";
 import Image from "next/image";
+import { useState, useRef } from "react";
+import { Html5QrcodeScanner } from "html5-qrcode";
+import Camera from "@/components/Camera";
+import InputCode from "@/components/InputCode";
+import Toast from "@/components/Toast";
+import { useMounted } from "@/lib/useMounted";
 
 export default function Home() {
+  const [uniqueCode, setUniqueCode] = useState("");
+  const [isCameraActive, setIsCameraActive] = useState(false);
+  const [activeTab, setActiveTab] = useState("scan");
+  const scannerRef = useRef<Html5QrcodeScanner | null>(null);
+  const qrBoxId = "qr-reader";
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastType, setToastType] = useState<"success" | "error">("success");
+  const [showToast, setShowToast] = useState(false);
+
+  const mounted = useMounted();
+  if (!mounted) return null;
+
+  const showToastMessage = (message: string, type: "success" | "error") => {
+    setToastMessage(message);
+    setToastType(type);
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
+  };
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    console.log(`QR Code detected: ${uniqueCode}`);
+    showToastMessage(`${uniqueCode}`, "success");
+    setUniqueCode("");
+  };
+
+  const onScanSuccess = (decodedText: string) => {
+    console.log(`QR Code detected: ${decodedText}`);
+    showToastMessage(`${decodedText}`, "success");
+  };
+
+  const onScanFailure = (error: string) => {
+    // showToastMessage(`Gagal memindai QR Code: ${error}`, "error");
+    console.warn(`QR Code scan error: ${error}`);
+  };
+
+  const toggleCamera = () => {
+    if (isCameraActive && scannerRef.current) {
+      scannerRef.current.clear().catch((error) => {
+        console.error("Failed to clear html5QrcodeScanner. ", error);
+      });
+      scannerRef.current = null;
+      setIsCameraActive(false);
+    } else if (!isCameraActive && activeTab === "scan") {
+      scannerRef.current = new Html5QrcodeScanner(
+        qrBoxId,
+        {
+          fps: 5,
+          qrbox: { width: 325, height: 325 },
+          supportedScanTypes: [],
+          rememberLastUsedCamera: true,
+        },
+        false
+      );
+      scannerRef.current.render(onScanSuccess, onScanFailure);
+      setIsCameraActive(true);
+    }
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <main className="relative w-full min-h-screen flex flex-col items-center justify-center bg-[#110c2a] font-sans ">
+      <Image
+        src="/tech-element.svg"
+        alt="elemen left"
+        width={200}
+        height={300}
+        className="h-4/5 w-auto rotate-180 absolute left-0 z-0 opacity-50"
+      />
+      <Image
+        src="/tech-element.svg"
+        alt="elemen right"
+        width={200}
+        height={300}
+        className="w-auto absolute right-0 h-4/5 z-0 opacity-50"
+      />
+
+      <div className="w-full min-h-screen flex flex-col items-center p-14 bg-linear-to-r from-[#17D3FD]/20 to-[#CD3DFF]/20 border-white/30 backdrop-blur-sm relative z-10">
+        <h1 className="text-7xl text-transparent bg-clip-text bg-linear-to-t from-gray-400 to-white uppercase font-bold font-stormfaze">
+          SEMNASTI 2025
+        </h1>
+        <h2 className="text-white text-lg mt-4 text-center px-4 font-plus-jakarta-sans">
+          Silakan scan QR Code / Masukan Kode Unik Anda untuk melanjutkan registrasi ulang.
+        </h2>
+
+        <div className="max-w-3xl mt-8 rounded-2xl w-full h-auto bg-[#181138] p-6 text-white flex flex-col items-center gap-6 border border-[#17D3FD]/30 shadow-2xl shadow-[#CD3DFF]/10">
+          <div className="flex w-full max-w-md bg-[#0f0b24] rounded-full h-fit border border-[#17D3FD]/20 font-plus-jakarta-sans">
+            <button
+              onClick={() => setActiveTab("scan")}
+              className={`flex-1 py-3 px-4 h-fit rounded-full font-semibold transition-all duration-300 ${
+                activeTab === "scan" ? "bg-[#CD3DFF]/80 text-white shadow-lg" : "text-gray-400 hover:text-white"
+              }`}
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+              Scan QR Code
+            </button>
+            <button
+              onClick={() => setActiveTab("manual")}
+              className={`flex-1 py-3 px-4 h-fit rounded-full font-semibold transition-all duration-300  ${
+                activeTab === "manual" ? "bg-[#CD3DFF]/80 text-white shadow-lg" : "text-gray-400 hover:text-white"
+              }`}
             >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+              Masukan Kode
+            </button>
+          </div>
+
+          {activeTab === "manual" ? (
+            <InputCode uniqueCode={uniqueCode} setUniqueCode={setUniqueCode} handleSubmit={handleSubmit} />
+          ) : (
+            <Camera isCameraActive={isCameraActive} toggleCamera={toggleCamera} qrBoxId={qrBoxId} />
+          )}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+      </div>
+      <Toast message={toastMessage} type={toastType} show={showToast} />
+    </main>
   );
 }
