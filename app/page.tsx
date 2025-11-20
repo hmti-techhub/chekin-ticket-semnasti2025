@@ -5,6 +5,7 @@ import { Html5QrcodeScanner } from "html5-qrcode";
 import Camera from "@/components/Camera";
 import InputCode from "@/components/InputCode";
 import Toast from "@/components/Toast";
+import { useMounted } from "@/lib/useMounted";
 
 export default function Home() {
   const [uniqueCode, setUniqueCode] = useState("");
@@ -15,6 +16,9 @@ export default function Home() {
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState<"success" | "error">("success");
   const [showToast, setShowToast] = useState(false);
+
+  const mounted = useMounted();
+  if (!mounted) return null;
 
   const showToastMessage = (message: string, type: "success" | "error") => {
     setToastMessage(message);
