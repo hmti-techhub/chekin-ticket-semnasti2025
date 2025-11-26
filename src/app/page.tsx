@@ -34,13 +34,13 @@ export default function Home() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (isLoading) return; // Prevent multiple submits
+    if (isLoading) return;
 
     const fullCode = `SEMNASTI2025-${uniqueCode}`;
     setIsLoading(true);
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000); // 2-second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
 
     try {
       const response = await fetch('/api/checkin', {
@@ -49,10 +49,10 @@ export default function Home() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ unique: fullCode }),
-        signal: controller.signal, // Attach the abort signal
+        signal: controller.signal,
       });
 
-      clearTimeout(timeoutId); // Clear timeout if fetch completes in time
+      clearTimeout(timeoutId);
 
       const data = await response.json();
 
@@ -60,7 +60,6 @@ export default function Home() {
         showToastMessage(`Halo ${data.participant?.name || fullCode}, Selamat Datang di SEMNASTI 2025`, "success", "Check-in Berhasil!");
         setUniqueCode("");
       } else {
-        // Handle error - check if already checked in or invalid QR
         if (data.invalidQR) {
           showToastMessage(data.error || 'QR Code tidak valid atau sudah digunakan', "warning", "QR Code Tidak Valid");
         } else if (data.alreadyCheckedIn) {
@@ -70,7 +69,7 @@ export default function Home() {
         }
       }
     } catch (error: any) {
-      clearTimeout(timeoutId); // Ensure timeout is cleared on error
+      clearTimeout(timeoutId);
       if (error.name === 'AbortError') {
         showToastMessage('Waktu check-in habis (timeout 2 detik)', "error", "Timeout");
       } else {
@@ -83,9 +82,8 @@ export default function Home() {
   };
 
   const onScanSuccess = async (decodedText: string) => {
-    if (isLoading) return; // Prevent multiple scans while processing
+    if (isLoading) return;
 
-    // Check cooldown - enforce 2000ms delay between scans
     const now = Date.now();
     const timeSinceLastScan = now - lastScanTimeRef.current;
     if (timeSinceLastScan < 2000) {
@@ -95,7 +93,7 @@ export default function Home() {
 
     console.log(`QR Code detected: ${decodedText}`);
     setIsLoading(true);
-    lastScanTimeRef.current = now; // Update last scan time
+    lastScanTimeRef.current = now;
 
     try {
       const response = await fetch('/api/checkin', {
@@ -128,7 +126,6 @@ export default function Home() {
   };
 
   const onScanFailure = (error: string) => {
-    // showToastMessage(`Gagal memindai QR Code: ${error}`, "error");
     console.warn(`QR Code scan error: ${error}`);
   };
 
