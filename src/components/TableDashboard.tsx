@@ -26,7 +26,7 @@ function TableDashboard({ filteredData, onResend, onUpdateKit, onUpdateConsumpti
           <th className="py-2 md:py-3 px-1 md:px-2 text-xs md:text-sm">Email</th>
           <th className="py-2 md:py-3 px-1 md:px-2 text-xs md:text-sm">Status</th>
           <th className="py-2 md:py-3 px-1 md:px-2 text-xs md:text-sm">Seminar Kit</th>
-          <th className="py-2 md:py-3 px-1 md:px-2 text-xs md:text-sm">Consumption</th>
+          <th className="py-2 md:py-3 px-1 md:px-2 text-xs md:text-sm">Snack</th>
           <th className="py-2 md:py-3 px-1 md:px-2 text-xs md:text-sm">Makanan Berat</th>
           <th className="py-2 md:py-3 px-1 md:px-2 text-xs md:text-sm">Action</th>
         </tr>
