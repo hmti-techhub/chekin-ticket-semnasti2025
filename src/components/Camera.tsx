@@ -1,13 +1,13 @@
-import React from "react";
-
 function Camera({
   isCameraActive,
   toggleCamera,
   qrBoxId,
+  isLoading,
 }: {
   isCameraActive: boolean;
   toggleCamera: () => void;
   qrBoxId: string;
+  isLoading?: boolean;
 }) {
   return (
     <div className="w-full max-w-lg flex flex-col items-center gap-6 h-full ">
@@ -27,17 +27,30 @@ function Camera({
             </div>
           )}
 
+          {/* Loading Overlay saat processing */}
+          {isLoading && isCameraActive && (
+            <div className="absolute inset-0 bg-black/70 flex items-center justify-center backdrop-blur-sm z-50">
+              <div className="text-center p-6">
+                <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-white font-plus-jakarta-sans font-semibold text-lg">Processing...</p>
+                <p className="text-gray-300 text-sm mt-2 font-plus-jakarta-sans">
+                  Mohon tunggu sebentar
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Scanner Guide Overlay */}
         </div>
         <div className="mt-4 flex justify-center w-full">
           <div className="bg-[#0f0b24] rounded-lg border border-[#17D3FD]/10 w-full">
             <button
               onClick={toggleCamera}
-              className={`py-3 w-full rounded-lg text-base font-semibold transition-colors font-plus-jakarta-sans ${
-                isCameraActive
-                  ? "bg-red-500 hover:bg-red-600 text-white"
-                  : "bg-green-500 hover:bg-green-600 text-white cursor-pointer"
-              }`}
+              disabled={isLoading}
+              className={`py-3 w-full rounded-lg text-base font-semibold transition-colors font-plus-jakarta-sans ${isCameraActive
+                ? "bg-red-500 hover:bg-red-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                : "bg-green-500 hover:bg-green-600 text-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                }`}
             >
               {isCameraActive ? "Stop Kamera" : "Hidupkan Kamera"}
             </button>

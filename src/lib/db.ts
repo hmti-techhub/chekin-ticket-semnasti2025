@@ -24,6 +24,7 @@ export interface Participant {
   seminar_kit: boolean;
   consumption: boolean;
   heavy_meal: boolean;
+  mission_card: boolean;
   registered_at?: Date;
   qr_hash?: string | null;
 }
@@ -48,6 +49,7 @@ export async function getParticipants(): Promise<Participant[]> {
     seminar_kit: Boolean(row.seminar_kit),
     consumption: Boolean(row.consumption),
     heavy_meal: Boolean(row.heavy_meal),
+    mission_card: Boolean(row.mission_card),
     registered_at: row.registered_at ? new Date(row.registered_at) : undefined,
     qr_hash: row.qr_hash,
   }));
@@ -66,6 +68,7 @@ export async function getParticipantByUniqueId(unique: string): Promise<Particip
     seminar_kit: Boolean(row.seminar_kit),
     consumption: Boolean(row.consumption),
     heavy_meal: Boolean(row.heavy_meal),
+    mission_card: Boolean(row.mission_card),
     registered_at: row.registered_at ? new Date(row.registered_at) : undefined,
     qr_hash: row.qr_hash,
   };
@@ -93,6 +96,11 @@ export async function updateParticipant(unique: string, updates: Partial<Partici
   if (updates.heavy_meal !== undefined) {
     fields.push('heavy_meal = ?');
     values.push(updates.heavy_meal);
+  }
+
+  if (updates.mission_card !== undefined) {
+    fields.push('mission_card = ?');
+    values.push(updates.mission_card);
   }
 
   if (updates.qr_hash !== undefined) {
@@ -180,7 +188,7 @@ async function ensureDatabase() {
     await connectionWithoutDb.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\``);
     await connectionWithoutDb.end();
 
-    // Create participants table with heavy_meal column
+    // Create participants table with heavy_meal and mission_card columns
     const createParticipantsTableSQL = `
       CREATE TABLE IF NOT EXISTS participants (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -191,6 +199,7 @@ async function ensureDatabase() {
         seminar_kit BOOLEAN NOT NULL DEFAULT FALSE,
         consumption BOOLEAN NOT NULL DEFAULT FALSE,
         heavy_meal BOOLEAN NOT NULL DEFAULT FALSE,
+        mission_card BOOLEAN NOT NULL DEFAULT FALSE,
         registered_at TIMESTAMP NULL,
         qr_hash VARCHAR(255) NULL,
         INDEX idx_unique_id (unique_id),

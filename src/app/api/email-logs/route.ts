@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getEmailLogs, deleteEmailLog } from '@/lib/db';
+import { getEmailLogs, deleteEmailLog, deleteAllEmailLogs } from '@/lib/db';
 
 export async function GET() {
     try {
@@ -15,7 +15,15 @@ export async function DELETE(req: NextRequest) {
     try {
         const searchParams = req.nextUrl.searchParams;
         const id = searchParams.get('id');
+        const all = searchParams.get('all');
 
+        // Delete all email logs
+        if (all === 'true') {
+            await deleteAllEmailLogs();
+            return NextResponse.json({ message: 'All email logs deleted successfully' });
+        }
+
+        // Delete single email log
         if (!id) {
             return NextResponse.json({ error: 'Log ID is required' }, { status: 400 });
         }

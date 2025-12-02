@@ -46,25 +46,29 @@ export function createSecureQRPayload(uniqueId: string, hash: string): string {
  * Returns null if format is invalid
  */
 export function parseQRPayload(payload: string): { uniqueId: string; hash: string } | null {
+    // Normalize payload: trim whitespace and remove any potential encoding issues
+    const normalizedPayload = payload.trim().replace(/\s+/g, '');
+
     console.log('🔍 [QR Parse] Parsing payload:', {
-        payloadPreview: payload.substring(0, 50) + (payload.length > 50 ? '...' : ''),
-        payloadLength: payload.length
+        originalLength: payload.length,
+        normalizedLength: normalizedPayload.length,
+        payloadPreview: normalizedPayload.substring(0, 50) + (normalizedPayload.length > 50 ? '...' : ''),
     });
 
-    const parts = payload.split('|');
+    const parts = normalizedPayload.split('|');
 
     if (parts.length !== 2) {
         console.warn('⚠️ [QR Parse] Invalid payload format:', {
             expectedParts: 2,
             actualParts: parts.length,
-            payload: payload.substring(0, 100)
+            payload: normalizedPayload.substring(0, 100)
         });
         return null;
     }
 
     const result = {
-        uniqueId: parts[0],
-        hash: parts[1]
+        uniqueId: parts[0].trim(),
+        hash: parts[1].trim()
     };
 
     console.log('✅ [QR Parse] Successfully parsed:', {
@@ -82,7 +86,9 @@ export function parseQRPayload(payload: string): { uniqueId: string; hash: strin
 export function validateQRHash(providedHash: string, storedHash: string | null | undefined): boolean {
     console.log('🔒 [QR Validate] Validating hash:', {
         providedHashPreview: providedHash.substring(0, 16) + '...',
+        providedHashLength: providedHash.length,
         storedHashPreview: storedHash ? storedHash.substring(0, 16) + '...' : 'null',
+        storedHashLength: storedHash?.length || 0,
         storedHashExists: !!storedHash
     });
 
@@ -91,16 +97,21 @@ export function validateQRHash(providedHash: string, storedHash: string | null |
         return false;
     }
 
-    const isValid = providedHash === storedHash;
+    // Normalize both hashes to ensure comparison works
+    const normalizedProvided = providedHash.trim();
+    const normalizedStored = storedHash.trim();
+
+    const isValid = normalizedProvided === normalizedStored;
 
     if (isValid) {
         console.log('✅ [QR Validate] Hash validation successful');
     } else {
         console.warn('❌ [QR Validate] Hash mismatch:', {
-            providedHashPreview: providedHash.substring(0, 16) + '...',
-            storedHashPreview: storedHash.substring(0, 16) + '...',
-            providedLength: providedHash.length,
-            storedLength: storedHash.length
+            providedHashPreview: normalizedProvided.substring(0, 16) + '...',
+            storedHashPreview: normalizedStored.substring(0, 16) + '...',
+            providedLength: normalizedProvided.length,
+            storedLength: normalizedStored.length,
+            firstDiffIndex: [...normalizedProvided].findIndex((char, i) => char !== normalizedStored[i])
         });
     }
 

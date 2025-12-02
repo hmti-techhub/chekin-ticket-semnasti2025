@@ -8,6 +8,7 @@ interface Participant {
     seminar_kit: boolean;
     consumption: boolean;
     heavy_meal: boolean;
+    mission_card: boolean;
     registered_at?: string;
 }
 

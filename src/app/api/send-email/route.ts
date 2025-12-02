@@ -3,6 +3,7 @@ import nodemailer from 'nodemailer';
 import QRCode from 'qrcode';
 import { pool, logEmailSend, updateParticipant } from '@/lib/db';
 import { generateQRHash, createSecureQRPayload } from '@/lib/qr-security';
+import { generateTicketPDF } from '@/lib/ticket-pdf';
 import { RowDataPacket } from 'mysql2';
 
 export async function POST(req: NextRequest) {
@@ -117,6 +118,21 @@ export async function POST(req: NextRequest) {
                           <p class="section-header">REGISTERED</p>
                           <p class="section-value">${p.registered_at ? new Date(p.registered_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase() : 'N/A'}</p>
                           
+                          <!-- Instructions Section -->
+                          <div style="background-color: #f8f9fa; border-left: 4px solid #1a73e8; padding: 20px; margin: 30px 0; border-radius: 4px;">
+                            <p style="font-size: 16px; font-weight: 500; color: #202124; margin: 0 0 15px 0;">How to Use Your Ticket</p>
+                            <ol style="margin: 0; padding-left: 20px; color: #5f6368; font-size: 14px; line-height: 1.8;">
+                              <li style="margin-bottom: 8px;"><strong>Save this email</strong> or download the attached PDF ticket for offline access</li>
+                              <li style="margin-bottom: 8px;"><strong>Arrive at the venue</strong> on DEC 6, 2025 at 8:00 AM (WIB)</li>
+                              <li style="margin-bottom: 8px;"><strong>Show your QR code</strong> at the registration desk for check-in</li>
+                              <li style="margin-bottom: 0;"><strong>Your order number</strong> (${p.unique_id}) will be verified by our team</li>
+                            </ol>
+                          </div>
+                          
+                          <p style="font-size: 13px; color: #5f6368; margin: 20px 0; text-align: center; line-height: 1.6;">
+                            <strong>Tip:</strong> You can also download your ticket as a PDF attachment in this email for easy access on your mobile device.
+                          </p>
+                          
                           <p class="footer-text">
                             © ${new Date().getFullYear()} HMTI UDINUS - All Rights Reserved.
                           </p>
@@ -141,6 +157,11 @@ export async function POST(req: NextRequest) {
               filename: 'qrcode.png',
               content: qrCodeBuffer,
               cid: 'qrcode',
+            },
+            {
+              filename: `ticket-${p.unique_id}.pdf`,
+              content: await generateTicketPDF(p, qrCodeBuffer),
+              contentType: 'application/pdf',
             },
           ],
         });

@@ -48,7 +48,10 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ unique: fullCode }),
+        body: JSON.stringify({
+          unique: fullCode,
+          type: 'code' // Manual input menggunakan type 'code'
+        }),
         signal: controller.signal,
       });
 
@@ -61,7 +64,7 @@ export default function Home() {
         setUniqueCode("");
       } else {
         if (data.invalidQR) {
-          showToastMessage(data.error || 'QR Code tidak valid atau sudah digunakan', "warning", "QR Code Tidak Valid");
+          showToastMessage(data.error || 'Code tidak valid', "warning", "Code Tidak Valid");
         } else if (data.alreadyCheckedIn) {
           showToastMessage(`${data.participant?.name} sudah melakukan check-in sebelumnya`, "warning", "Sudah Check-in");
         } else {
@@ -82,32 +85,63 @@ export default function Home() {
   };
 
   const onScanSuccess = async (decodedText: string) => {
-    if (isLoading) return;
-
-    const now = Date.now();
-    const timeSinceLastScan = now - lastScanTimeRef.current;
-    if (timeSinceLastScan < 2000) {
-      console.log(`Scan ignored - cooldown active (${timeSinceLastScan}ms since last scan)`);
+    if (isLoading) {
+      console.log('⏸️ Scan ignored - already processing a request');
       return;
     }
 
-    console.log(`QR Code detected: ${decodedText}`);
+    const now = Date.now();
+    const timeSinceLastScan = now - lastScanTimeRef.current;
+
+    // Cooldown 3 detik untuk mencegah spam
+    if (timeSinceLastScan < 3000) {
+      console.log(`⏸️ Scan ignored - cooldown active (${timeSinceLastScan}ms since last scan)`);
+      return;
+    }
+
+    console.log(`📷 QR Code detected: ${decodedText.substring(0, 30)}...`);
     setIsLoading(true);
     lastScanTimeRef.current = now;
 
+    // Pause scanner saat processing untuk mencegah multiple scan
+    if (scannerRef.current) {
+      try {
+        await scannerRef.current.pause(true);
+        console.log('⏸️ Scanner paused during processing');
+      } catch (error) {
+        console.warn('Failed to pause scanner:', error);
+      }
+    }
+
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 detik timeout
+
       const response = await fetch('/api/checkin', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ unique: decodedText }),
+        body: JSON.stringify({
+          unique: decodedText,
+          type: 'qrcode'
+        }),
+        signal: controller.signal,
       });
 
+      clearTimeout(timeoutId);
       const data = await response.json();
 
       if (response.ok) {
         showToastMessage(`Halo ${data.participant?.name || decodedText}, Selamat Datang di SEMNASTI 2025`, "success", "Check-in Berhasil!");
+
+        // Delay sebelum resume scanner untuk memberi waktu user melihat hasil
+        setTimeout(() => {
+          if (scannerRef.current) {
+            scannerRef.current.resume();
+            console.log('▶️ Scanner resumed');
+          }
+        }, 1500);
       } else {
         if (data.invalidQR) {
           showToastMessage(data.error || 'QR Code tidak valid atau sudah digunakan', "warning", "QR Code Tidak Valid");
@@ -116,17 +150,41 @@ export default function Home() {
         } else {
           showToastMessage(data.error || 'Check-in gagal', "error", "Check-in Gagal");
         }
+
+        // Resume scanner lebih cepat jika error
+        setTimeout(() => {
+          if (scannerRef.current) {
+            scannerRef.current.resume();
+            console.log('▶️ Scanner resumed after error');
+          }
+        }, 1000);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Check-in error:', error);
-      showToastMessage('Terjadi kesalahan saat check-in', "error", "Error");
+
+      if (error.name === 'AbortError') {
+        showToastMessage('Request timeout - silakan coba lagi', "error", "Timeout");
+      } else {
+        showToastMessage('Terjadi kesalahan saat check-in', "error", "Error");
+      }
+
+      // Resume scanner jika error
+      setTimeout(() => {
+        if (scannerRef.current) {
+          scannerRef.current.resume();
+          console.log('▶️ Scanner resumed after error');
+        }
+      }, 1500);
     } finally {
       setIsLoading(false);
     }
   };
 
   const onScanFailure = (error: string) => {
-    console.warn(`QR Code scan error: ${error}`);
+    // Hanya log error yang penting, abaikan "No QR code found"
+    if (!error.includes('NotFoundException')) {
+      console.warn(`QR Code scan error: ${error}`);
+    }
   };
 
   const toggleCamera = () => {
@@ -140,7 +198,7 @@ export default function Home() {
       scannerRef.current = new Html5QrcodeScanner(
         qrBoxId,
         {
-          fps: 5,
+          fps: 10, // Tingkatkan FPS untuk scan lebih responsif
           qrbox: { width: 325, height: 325 },
           supportedScanTypes: [],
           rememberLastUsedCamera: true,
@@ -191,7 +249,7 @@ export default function Home() {
           {activeTab === "manual" ? (
             <InputCode uniqueCode={uniqueCode} setUniqueCode={setUniqueCode} handleSubmit={handleSubmit} isLoading={isLoading} />
           ) : (
-            <Camera isCameraActive={isCameraActive} toggleCamera={toggleCamera} qrBoxId={qrBoxId} />
+            <Camera isCameraActive={isCameraActive} toggleCamera={toggleCamera} qrBoxId={qrBoxId} isLoading={isLoading} />
           )}
         </div>
       </div>
