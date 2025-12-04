@@ -31,7 +31,19 @@ export default function Dashboard() {
   const [showEmailHistory, setShowEmailHistory] = useState(false);
   const [historySearch, setHistorySearch] = useState("");
   const [historyPage, setHistoryPage] = useState(1);
-  const historyItemsPerPage = 100;
+  const historyItemsPerPage = 30;
+
+  useEffect(() => {
+    if (isManualRegModalOpen || isUploadModalOpen || isEditModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [isManualRegModalOpen, isUploadModalOpen, isEditModalOpen]);
 
   // Email progress state
   const [emailProgress, setEmailProgress] = useState({
@@ -40,11 +52,13 @@ export default function Dashboard() {
     current: 0,
     success: 0,
     failed: 0,
-    isBulk: false
+    isBulk: false,
   });
 
   // Optimistic UI state for checkboxes
-  const [optimisticUpdates, setOptimisticUpdates] = useState<Record<string, { seminar_kit?: boolean; consumption?: boolean; heavy_meal?: boolean; mission_card?: boolean }>>({});
+  const [optimisticUpdates, setOptimisticUpdates] = useState<
+    Record<string, { seminar_kit?: boolean; consumption?: boolean; heavy_meal?: boolean; mission_card?: boolean }>
+  >({});
 
   const mounted = useMounted();
 
@@ -57,7 +71,7 @@ export default function Dashboard() {
       const newOptimisticUpdates = { ...optimisticUpdates };
       let hasChanges = false;
 
-      participantData.forEach(participant => {
+      participantData.forEach((participant) => {
         const optimistic = optimisticUpdates[participant.unique];
         if (optimistic) {
           // Check apakah data real-time sudah match dengan optimistic update
@@ -193,7 +207,7 @@ export default function Dashboard() {
   const handleSendEmail = async () => {
     if (!confirm("Send emails to ALL participants?")) return;
 
-    const allIds = participantData.map(p => p.unique);
+    const allIds = participantData.map((p) => p.unique);
     const total = allIds.length;
 
     // Initialize progress
@@ -203,7 +217,7 @@ export default function Dashboard() {
       current: 0,
       success: 0,
       failed: 0,
-      isBulk: true
+      isBulk: true,
     });
 
     setSendingEmail(true);
@@ -232,21 +246,24 @@ export default function Dashboard() {
       }
 
       // Update progress
-      setEmailProgress(prev => ({
+      setEmailProgress((prev) => ({
         ...prev,
         current: i + 1,
         success: successCount,
-        failed: failCount
+        failed: failCount,
       }));
     }
 
     setSendingEmail(false);
     fetchEmailLogs();
-    showToastMessage(`✅ Email selesai dikirim: ${successCount} berhasil, ${failCount} gagal`, successCount > 0 ? "success" : "error");
+    showToastMessage(
+      `✅ Email selesai dikirim: ${successCount} berhasil, ${failCount} gagal`,
+      successCount > 0 ? "success" : "error"
+    );
 
     // Auto close modal after 2 seconds
     setTimeout(() => {
-      setEmailProgress(prev => ({ ...prev, isOpen: false }));
+      setEmailProgress((prev) => ({ ...prev, isOpen: false }));
     }, 2000);
   };
 
@@ -260,7 +277,7 @@ export default function Dashboard() {
       current: 0,
       success: 0,
       failed: 0,
-      isBulk: false
+      isBulk: false,
     });
 
     try {
@@ -279,7 +296,7 @@ export default function Dashboard() {
         current: 1,
         success: res.ok && data.success > 0 ? 1 : 0,
         failed: res.ok && data.success > 0 ? 0 : 1,
-        isBulk: false
+        isBulk: false,
       });
 
       if (res.ok) {
@@ -290,25 +307,25 @@ export default function Dashboard() {
       }
     } catch (error) {
       console.error("Error sending email:", error);
-      setEmailProgress(prev => ({
+      setEmailProgress((prev) => ({
         ...prev,
         current: 1,
-        failed: 1
+        failed: 1,
       }));
       showToastMessage("❌ Terjadi kesalahan saat mengirim email", "error");
     }
 
     // Auto close modal after 2 seconds
     setTimeout(() => {
-      setEmailProgress(prev => ({ ...prev, isOpen: false }));
+      setEmailProgress((prev) => ({ ...prev, isOpen: false }));
     }, 2000);
   };
 
   const handleUpdateKitAndSnack = async (uniqueId: string, value: boolean) => {
     // Optimistic update - langsung update UI untuk kedua field
-    setOptimisticUpdates(prev => ({
+    setOptimisticUpdates((prev) => ({
       ...prev,
-      [uniqueId]: { ...prev[uniqueId], seminar_kit: value, consumption: value }
+      [uniqueId]: { ...prev[uniqueId], seminar_kit: value, consumption: value },
     }));
 
     try {
@@ -319,12 +336,15 @@ export default function Dashboard() {
       });
 
       if (res.ok) {
-        showToastMessage(value ? "✅ Seminar kit & snack ditandai sudah diambil" : "⚠️ Seminar kit & snack ditandai belum diambil", "success");
+        showToastMessage(
+          value ? "✅ Seminar kit & snack ditandai sudah diambil" : "⚠️ Seminar kit & snack ditandai belum diambil",
+          "success"
+        );
         // Jangan clear optimistic update, biarkan real-time update yang mengambil alih
         // Ini mencegah flickering
       } else {
         // Rollback jika gagal
-        setOptimisticUpdates(prev => {
+        setOptimisticUpdates((prev) => {
           const newState = { ...prev };
           if (newState[uniqueId]) {
             delete newState[uniqueId].seminar_kit;
@@ -337,7 +357,7 @@ export default function Dashboard() {
       }
     } catch (error) {
       // Rollback jika error
-      setOptimisticUpdates(prev => {
+      setOptimisticUpdates((prev) => {
         const newState = { ...prev };
         if (newState[uniqueId]) {
           delete newState[uniqueId].seminar_kit;
@@ -353,9 +373,9 @@ export default function Dashboard() {
 
   const handleUpdateHeavyMeal = async (uniqueId: string, value: boolean) => {
     // Optimistic update - langsung update UI
-    setOptimisticUpdates(prev => ({
+    setOptimisticUpdates((prev) => ({
       ...prev,
-      [uniqueId]: { ...prev[uniqueId], heavy_meal: value }
+      [uniqueId]: { ...prev[uniqueId], heavy_meal: value },
     }));
 
     try {
@@ -366,12 +386,15 @@ export default function Dashboard() {
       });
 
       if (res.ok) {
-        showToastMessage(value ? "✅ Makanan berat ditandai sudah diambil" : "⚠️ Makanan berat ditandai belum diambil", "success");
+        showToastMessage(
+          value ? "✅ Makanan berat ditandai sudah diambil" : "⚠️ Makanan berat ditandai belum diambil",
+          "success"
+        );
         // Jangan clear optimistic update, biarkan real-time update yang mengambil alih
         // Ini mencegah flickering
       } else {
         // Rollback jika gagal
-        setOptimisticUpdates(prev => {
+        setOptimisticUpdates((prev) => {
           const newState = { ...prev };
           if (newState[uniqueId]) {
             delete newState[uniqueId].heavy_meal;
@@ -383,7 +406,7 @@ export default function Dashboard() {
       }
     } catch (error) {
       // Rollback jika error
-      setOptimisticUpdates(prev => {
+      setOptimisticUpdates((prev) => {
         const newState = { ...prev };
         if (newState[uniqueId]) {
           delete newState[uniqueId].heavy_meal;
@@ -398,9 +421,9 @@ export default function Dashboard() {
 
   const handleUpdateMissionCard = async (uniqueId: string, value: boolean) => {
     // Optimistic update - langsung update UI
-    setOptimisticUpdates(prev => ({
+    setOptimisticUpdates((prev) => ({
       ...prev,
-      [uniqueId]: { ...prev[uniqueId], mission_card: value }
+      [uniqueId]: { ...prev[uniqueId], mission_card: value },
     }));
 
     try {
@@ -416,7 +439,7 @@ export default function Dashboard() {
         // Ini mencegah flickering
       } else {
         // Rollback jika gagal
-        setOptimisticUpdates(prev => {
+        setOptimisticUpdates((prev) => {
           const newState = { ...prev };
           if (newState[uniqueId]) {
             delete newState[uniqueId].mission_card;
@@ -428,7 +451,7 @@ export default function Dashboard() {
       }
     } catch (error) {
       // Rollback jika error
-      setOptimisticUpdates(prev => {
+      setOptimisticUpdates((prev) => {
         const newState = { ...prev };
         if (newState[uniqueId]) {
           delete newState[uniqueId].mission_card;
@@ -441,63 +464,63 @@ export default function Dashboard() {
     }
   };
 
-  const handleExport = async (type: 'all' | 'attended' | 'not-attended') => {
+  const handleExport = async (type: "all" | "attended" | "not-attended") => {
     setExporting(true);
     try {
       const res = await fetch(`/api/export?type=${type}`);
       if (res.ok) {
         const blob = await res.blob();
         const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
+        const a = document.createElement("a");
         a.href = url;
-        a.download = `Peserta_${type}_${new Date().toISOString().split('T')[0]}.xlsx`;
+        a.download = `Peserta_${type}_${new Date().toISOString().split("T")[0]}.xlsx`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
-        showToastMessage('✅ Data berhasil di-export!', 'success');
+        showToastMessage("✅ Data berhasil di-export!", "success");
       } else {
-        showToastMessage('❌ Gagal export data', 'error');
+        showToastMessage("❌ Gagal export data", "error");
       }
     } catch (error) {
-      console.error('Export error:', error);
-      showToastMessage('❌ Terjadi kesalahan saat export', 'error');
+      console.error("Export error:", error);
+      showToastMessage("❌ Terjadi kesalahan saat export", "error");
     } finally {
       setExporting(false);
     }
   };
 
   const handleDeleteEmailLog = async (id: number) => {
-    if (!confirm('Hapus email log ini?')) return;
+    if (!confirm("Hapus email log ini?")) return;
 
     try {
-      const res = await fetch(`/api/email-logs?id=${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/email-logs?id=${id}`, { method: "DELETE" });
       if (res.ok) {
-        showToastMessage('✅ Email log berhasil dihapus', 'success');
+        showToastMessage("✅ Email log berhasil dihapus", "success");
         fetchEmailLogs(); // Refresh logs
       } else {
-        showToastMessage('❌ Gagal menghapus email log', 'error');
+        showToastMessage("❌ Gagal menghapus email log", "error");
       }
     } catch (error) {
-      console.error('Delete email log error:', error);
-      showToastMessage('❌ Terjadi kesalahan', 'error');
+      console.error("Delete email log error:", error);
+      showToastMessage("❌ Terjadi kesalahan", "error");
     }
   };
 
   const handleDeleteAllEmailLogs = async () => {
-    if (!confirm('Hapus SEMUA email log? Tindakan ini tidak dapat dibatalkan!')) return;
+    if (!confirm("Hapus SEMUA email log? Tindakan ini tidak dapat dibatalkan!")) return;
 
     try {
-      const res = await fetch('/api/email-logs?all=true', { method: 'DELETE' });
+      const res = await fetch("/api/email-logs?all=true", { method: "DELETE" });
       if (res.ok) {
-        showToastMessage('✅ Semua email log berhasil dihapus', 'success');
+        showToastMessage("✅ Semua email log berhasil dihapus", "success");
         fetchEmailLogs(); // Refresh logs
       } else {
-        showToastMessage('❌ Gagal menghapus email log', 'error');
+        showToastMessage("❌ Gagal menghapus email log", "error");
       }
     } catch (error) {
-      console.error('Delete all email logs error:', error);
-      showToastMessage('❌ Terjadi kesalahan', 'error');
+      console.error("Delete all email logs error:", error);
+      showToastMessage("❌ Terjadi kesalahan", "error");
     }
   };
 
@@ -507,7 +530,7 @@ export default function Dashboard() {
 
   // Process Email Logs
   const processedLogsMap = emailLogs
-    .filter(log => {
+    .filter((log) => {
       const searchLower = historySearch.toLowerCase();
       return (
         (log.email && log.email.toLowerCase().includes(searchLower)) ||
@@ -528,14 +551,12 @@ export default function Dashboard() {
       return acc;
     }, new Map());
 
-  const processedLogs = Array.from(processedLogsMap.values())
-    .sort((a: any, b: any) => new Date(b.sent_at).getTime() - new Date(a.sent_at).getTime());
+  const processedLogs = Array.from(processedLogsMap.values()).sort(
+    (a: any, b: any) => new Date(b.sent_at).getTime() - new Date(a.sent_at).getTime()
+  );
 
   const totalHistoryPages = Math.ceil(processedLogs.length / historyItemsPerPage);
-  const paginatedHistory = processedLogs.slice(
-    (historyPage - 1) * historyItemsPerPage,
-    historyPage * historyItemsPerPage
-  );
+  const paginatedHistory = processedLogs.slice((historyPage - 1) * historyItemsPerPage, historyPage * historyItemsPerPage);
 
   // Optimized search with auto-reset pagination
   const searchTrimmed = search.trim().toLowerCase();
@@ -568,9 +589,16 @@ export default function Dashboard() {
     const containsEmail = emailLower.includes(searchTrimmed);
 
     // Match if any condition is true
-    const matchSearch = exactMatchName || exactMatchUnique || exactMatchEmail ||
-      startsWithName || startsWithUnique || startsWithEmail ||
-      containsName || containsUnique || containsEmail;
+    const matchSearch =
+      exactMatchName ||
+      exactMatchUnique ||
+      exactMatchEmail ||
+      startsWithName ||
+      startsWithUnique ||
+      startsWithEmail ||
+      containsName ||
+      containsUnique ||
+      containsEmail;
 
     // Apply status filter
     const matchStatus = statusFilter === "all" ? true : statusFilter === "present" ? participant.present : !participant.present;
@@ -579,28 +607,30 @@ export default function Dashboard() {
   });
 
   // Sort results: exact matches first, then starts with, then contains
-  const sortedFilteredData = searchTrimmed ? filteredData.sort((a, b) => {
-    const aName = a.name.toLowerCase().trim();
-    const bName = b.name.toLowerCase().trim();
-    const aUnique = a.unique.toLowerCase().trim();
-    const bUnique = b.unique.toLowerCase().trim();
-    const aEmail = a.email.toLowerCase().trim();
-    const bEmail = b.email.toLowerCase().trim();
+  const sortedFilteredData = searchTrimmed
+    ? filteredData.sort((a, b) => {
+        const aName = a.name.toLowerCase().trim();
+        const bName = b.name.toLowerCase().trim();
+        const aUnique = a.unique.toLowerCase().trim();
+        const bUnique = b.unique.toLowerCase().trim();
+        const aEmail = a.email.toLowerCase().trim();
+        const bEmail = b.email.toLowerCase().trim();
 
-    // Exact matches get highest priority
-    const aExact = aName === searchTrimmed || aUnique === searchTrimmed || aEmail === searchTrimmed;
-    const bExact = bName === searchTrimmed || bUnique === searchTrimmed || bEmail === searchTrimmed;
-    if (aExact && !bExact) return -1;
-    if (!aExact && bExact) return 1;
+        // Exact matches get highest priority
+        const aExact = aName === searchTrimmed || aUnique === searchTrimmed || aEmail === searchTrimmed;
+        const bExact = bName === searchTrimmed || bUnique === searchTrimmed || bEmail === searchTrimmed;
+        if (aExact && !bExact) return -1;
+        if (!aExact && bExact) return 1;
 
-    // Starts with gets second priority
-    const aStarts = aName.startsWith(searchTrimmed) || aUnique.startsWith(searchTrimmed) || aEmail.startsWith(searchTrimmed);
-    const bStarts = bName.startsWith(searchTrimmed) || bUnique.startsWith(searchTrimmed) || bEmail.startsWith(searchTrimmed);
-    if (aStarts && !bStarts) return -1;
-    if (!aStarts && bStarts) return 1;
+        // Starts with gets second priority
+        const aStarts = aName.startsWith(searchTrimmed) || aUnique.startsWith(searchTrimmed) || aEmail.startsWith(searchTrimmed);
+        const bStarts = bName.startsWith(searchTrimmed) || bUnique.startsWith(searchTrimmed) || bEmail.startsWith(searchTrimmed);
+        if (aStarts && !bStarts) return -1;
+        if (!aStarts && bStarts) return 1;
 
-    return 0;
-  }) : filteredData;
+        return 0;
+      })
+    : filteredData;
 
   const totalPages = Math.ceil(sortedFilteredData.length / itemsPerPage);
   const paginatedData = sortedFilteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -628,7 +658,7 @@ export default function Dashboard() {
         className="h-4/5 w-auto absolute right-0 z-0 opacity-40"
       />
 
-      <div className="w-full min-h-screen px-4 py-8 md:px-8 md:py-10 lg:px-14 lg:py-14 bg-linear-to-r from-[#17D3FD]/20 to-[#CD3DFF]/20 backdrop-blur-sm relative z-10">
+      <div className="w-full min-h-screen px-2 py-8 md:px-8 md:py-10 lg:px-14 lg:py-14 bg-linear-to-r from-[#17D3FD]/20 to-[#CD3DFF]/20 backdrop-blur-sm relative z-10">
         <h1 className="text-4xl md:text-5xl lg:text-6xl text-transparent bg-clip-text bg-linear-to-t from-gray-400 to-white uppercase font-bold font-stormfaze text-center">
           SEMNASTI 2025
         </h1>
@@ -647,17 +677,15 @@ export default function Dashboard() {
               </div>
               {/* Real-time connection indicator */}
               <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-black/30 border border-gray-700">
-                <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-400 animate-pulse' : 'bg-red-400'}`}></div>
-                <span className="text-xs text-gray-300">
-                  {isConnected ? 'Live' : 'Offline'}
-                </span>
+                <div className={`w-2 h-2 rounded-full ${isConnected ? "bg-green-400 animate-pulse" : "bg-red-400"}`}></div>
+                <span className="text-xs text-gray-300">{isConnected ? "Live" : "Offline"}</span>
               </div>
             </div>
 
             <div className="flex flex-wrap gap-2 md:gap-3 w-full lg:w-auto">
               <button
                 onClick={() => setIsManualRegModalOpen(true)}
-                className="group relative overflow-hidden rounded-lg bg-gradient-to-r from-cyan-500/10 to-cyan-600/10 px-4 py-2.5 text-sm font-medium text-cyan-300 shadow-lg shadow-cyan-500/20 ring-1 ring-inset ring-cyan-400/20 transition-all hover:from-cyan-500/20 hover:to-cyan-600/20 hover:shadow-cyan-500/30 hover:ring-cyan-400/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
+                className="group relative overflow-hidden rounded-lg bg-gradient-to-r from-cyan-500/10 to-cyan-600/10 px-4 py-2.5 text-sm font-medium text-cyan-300 shadow-md shadow-cyan-500/20 ring-1 ring-inset ring-cyan-400/20 transition-all hover:from-cyan-500/20 hover:to-cyan-600/20 hover:shadow-cyan-500/30 hover:ring-cyan-400/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
               >
                 <FaUserPlus className="h-4 w-4" />
                 <span className="hidden sm:inline">Tambah Manual</span>
@@ -665,7 +693,7 @@ export default function Dashboard() {
               </button>
               <button
                 onClick={() => setIsUploadModalOpen(true)}
-                className="group relative overflow-hidden rounded-lg bg-gradient-to-r from-blue-500/10 to-blue-600/10 px-4 py-2.5 text-sm font-medium text-blue-300 shadow-lg shadow-blue-500/20 ring-1 ring-inset ring-blue-400/20 transition-all hover:from-blue-500/20 hover:to-blue-600/20 hover:shadow-blue-500/30 hover:ring-blue-400/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
+                className="group relative overflow-hidden rounded-lg bg-gradient-to-r from-blue-500/10 to-blue-600/10 px-4 py-2.5 text-sm font-medium text-blue-300 shadow-md shadow-blue-500/20 ring-1 ring-inset ring-blue-400/20 transition-all hover:from-blue-500/20 hover:to-blue-600/20 hover:shadow-blue-500/30 hover:ring-blue-400/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
               >
                 <FaUpload className="h-4 w-4" />
                 <span className="hidden sm:inline">Upload Data</span>
@@ -674,7 +702,7 @@ export default function Dashboard() {
               <button
                 onClick={handleSendEmail}
                 disabled={sendingEmail}
-                className="group relative overflow-hidden rounded-lg bg-gradient-to-r from-green-500/10 to-green-600/10 px-4 py-2.5 text-sm font-medium text-green-300 shadow-lg shadow-green-500/20 ring-1 ring-inset ring-green-400/20 transition-all hover:from-green-500/20 hover:to-green-600/20 hover:shadow-green-500/30 hover:ring-green-400/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
+                className="group relative overflow-hidden rounded-lg bg-gradient-to-r from-green-500/10 to-green-600/10 px-4 py-2.5 text-sm font-medium text-green-300 shadow-md shadow-green-500/20 ring-1 ring-inset ring-green-400/20 transition-all hover:from-green-500/20 hover:to-green-600/20 hover:shadow-green-500/30 hover:ring-green-400/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
               >
                 <FaEnvelope className="h-4 w-4" />
                 <span className="hidden sm:inline">{sendingEmail ? "Sending..." : "Send Emails"}</span>
@@ -682,7 +710,7 @@ export default function Dashboard() {
               </button>
               <button
                 onClick={handleDeleteAll}
-                className="group relative overflow-hidden rounded-lg bg-gradient-to-r from-red-500/10 to-red-600/10 px-4 py-2.5 text-sm font-medium text-red-300 shadow-lg shadow-red-500/20 ring-1 ring-inset ring-red-400/20 transition-all hover:from-red-500/20 hover:to-red-600/20 hover:shadow-red-500/30 hover:ring-red-400/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
+                className="group relative overflow-hidden rounded-lg bg-gradient-to-r from-red-500/10 to-red-600/10 px-4 py-2.5 text-sm font-medium text-red-300 shadow-md shadow-red-500/20 ring-1 ring-inset ring-red-400/20 transition-all hover:from-red-500/20 hover:to-red-600/20 hover:shadow-red-500/30 hover:ring-red-400/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
               >
                 <FaTrash className="h-4 w-4" />
                 <span className="hidden sm:inline">Delete All</span>
@@ -694,7 +722,7 @@ export default function Dashboard() {
                 <button
                   onClick={() => setShowExportMenu(!showExportMenu)}
                   disabled={exporting}
-                  className="group relative overflow-hidden rounded-lg bg-gradient-to-r from-purple-500/10 to-purple-600/10 px-4 py-2.5 text-sm font-medium text-purple-300 shadow-lg shadow-purple-500/20 ring-1 ring-inset ring-purple-400/20 transition-all hover:from-purple-500/20 hover:to-purple-600/20 hover:shadow-purple-500/30 hover:ring-purple-400/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
+                  className="group relative overflow-hidden rounded-lg bg-gradient-to-r from-purple-500/10 to-purple-600/10 px-4 py-2.5 text-sm font-medium text-purple-300 shadow-md shadow-purple-500/20 ring-1 ring-inset ring-purple-400/20 transition-all hover:from-purple-500/20 hover:to-purple-600/20 hover:shadow-purple-500/30 hover:ring-purple-400/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
                 >
                   <FaDownload className="h-4 w-4" />
                   <span>{exporting ? "Exporting..." : "Export Data"}</span>
@@ -703,7 +731,7 @@ export default function Dashboard() {
                   <div className="absolute right-0 mt-2 w-56 rounded-xl border border-white/10 bg-[#0f0b24]/95 backdrop-blur-sm shadow-2xl z-20 overflow-hidden">
                     <button
                       onClick={() => {
-                        handleExport('all');
+                        handleExport("all");
                         setShowExportMenu(false);
                       }}
                       disabled={exporting}
@@ -714,7 +742,7 @@ export default function Dashboard() {
                     </button>
                     <button
                       onClick={() => {
-                        handleExport('attended');
+                        handleExport("attended");
                         setShowExportMenu(false);
                       }}
                       disabled={exporting}
@@ -725,7 +753,7 @@ export default function Dashboard() {
                     </button>
                     <button
                       onClick={() => {
-                        handleExport('not-attended');
+                        handleExport("not-attended");
                         setShowExportMenu(false);
                       }}
                       disabled={exporting}
@@ -776,23 +804,26 @@ export default function Dashboard() {
           {search && (
             <div className="mt-4 flex items-center justify-between text-sm font-plus-jakarta-sans">
               <div className="text-gray-400">
-                Menampilkan <span className="text-[#17D3FD] font-semibold">{sortedFilteredData.length}</span> hasil untuk "<span className="text-white font-medium">{search}</span>"
+                Menampilkan <span className="text-[#17D3FD] font-semibold">{sortedFilteredData.length}</span> hasil untuk "
+                <span className="text-white font-medium">{search}</span>"
               </div>
-              {sortedFilteredData.length === 0 && (
-                <div className="text-yellow-400 text-xs">
-                  Tidak ada hasil yang cocok
-                </div>
-              )}
+              {sortedFilteredData.length === 0 && <div className="text-yellow-400 text-xs">Tidak ada hasil yang cocok</div>}
             </div>
           )}
 
           {/* Info Note */}
           <div className="mt-4 p-3 md:p-4 rounded-lg bg-green-500/10 border border-green-500/30 flex items-start gap-2 md:gap-3">
             <svg className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+              <path
+                fillRule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                clipRule="evenodd"
+              />
             </svg>
             <div className="text-xs md:text-sm text-gray-300 font-plus-jakarta-sans">
-              <span className="font-semibold text-green-300">Info:</span> Nama peserta dengan <span className="px-2 py-0.5 bg-green-500/30 rounded text-green-300 font-semibold">background hijau</span> menandakan email tiket sudah berhasil terkirim.
+              <span className="font-semibold text-green-300">Info:</span> Nama peserta dengan{" "}
+              <span className="px-2 py-0.5 bg-green-500/30 rounded text-green-300 font-semibold">background hijau</span>{" "}
+              menandakan email tiket sudah berhasil terkirim.
             </div>
           </div>
 
@@ -805,11 +836,11 @@ export default function Dashboard() {
                   const optimistic = optimisticUpdates[p.unique] || {};
                   return {
                     ...p,
-                    registered_at: p.registered_at || '',
-                    seminar_kit: optimistic.seminar_kit !== undefined ? optimistic.seminar_kit : (p.seminar_kit || false),
-                    consumption: optimistic.consumption !== undefined ? optimistic.consumption : (p.consumption || false),
-                    heavy_meal: optimistic.heavy_meal !== undefined ? optimistic.heavy_meal : (p.heavy_meal || false),
-                    mission_card: optimistic.mission_card !== undefined ? optimistic.mission_card : (p.mission_card || false),
+                    registered_at: p.registered_at || "",
+                    seminar_kit: optimistic.seminar_kit !== undefined ? optimistic.seminar_kit : p.seminar_kit || false,
+                    consumption: optimistic.consumption !== undefined ? optimistic.consumption : p.consumption || false,
+                    heavy_meal: optimistic.heavy_meal !== undefined ? optimistic.heavy_meal : p.heavy_meal || false,
+                    mission_card: optimistic.mission_card !== undefined ? optimistic.mission_card : p.mission_card || false,
                   };
                 })}
                 emailLogs={emailLogs}
@@ -827,65 +858,31 @@ export default function Dashboard() {
               <button
                 onClick={() => goToPage(currentPage - 1)}
                 disabled={currentPage === 1}
-                className={`px-4 py-2 rounded-lg border ${currentPage === 1
-                  ? "border-gray-600 text-gray-600 cursor-not-allowed"
-                  : "border-[#17D3FD]/40 text-[#17D3FD] hover:bg-[#17D3FD]/10"
-                  }`}
+                className={`px-4 py-2 rounded-lg border ${
+                  currentPage === 1
+                    ? "border-gray-600 text-gray-600 cursor-not-allowed"
+                    : "border-[#17D3FD]/40 text-[#17D3FD] hover:bg-[#17D3FD]/10"
+                }`}
               >
                 Prev
               </button>
-
-              {/* Page numbers */}
-              <div className="flex gap-2">
-                {Array.from({ length: totalPages }).map((_, i) => {
-                  const page = i + 1;
-                  return (
-                    <button
-                      key={page}
-                      onClick={() => goToPage(page)}
-                      className={`px-3 py-1 rounded-md border transition-all ${currentPage === page
-                        ? "bg-[#17D3FD]/20 border-[#17D3FD] text-[#17D3FD] font-semibold"
-                        : "border-gray-600 text-gray-400 hover:bg-white/5"
-                        }`}
-                    >
-                      {page}
-                    </button>
-                  );
-                })}
-              </div>
+              <span>
+                Page {currentPage} of {totalPages}
+              </span>
 
               <button
                 onClick={() => goToPage(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className={`px-4 py-2 rounded-lg border ${currentPage === totalPages
-                  ? "border-gray-600 text-gray-600 cursor-not-allowed"
-                  : "border-[#17D3FD]/40 text-[#17D3FD] hover:bg-[#17D3FD]/10"
-                  }`}
+                className={`px-4 py-2 rounded-lg border ${
+                  currentPage === totalPages
+                    ? "border-gray-600 text-gray-600 cursor-not-allowed"
+                    : "border-[#17D3FD]/40 text-[#17D3FD] hover:bg-[#17D3FD]/10"
+                }`}
               >
                 Next
               </button>
             </div>
           )}
-          <UploadModal
-            isOpen={isUploadModalOpen}
-            onClose={() => setIsUploadModalOpen(false)}
-            onUploadSuccess={refreshManually}
-          />
-          <ManualRegistrationModal
-            isOpen={isManualRegModalOpen}
-            onClose={() => setIsManualRegModalOpen(false)}
-            onSuccess={() => {
-              showToastMessage('✅ Peserta berhasil ditambahkan!', 'success');
-              refreshManually();
-            }}
-            onError={(message) => showToastMessage(`❌ ${message}`, 'error')}
-          />
-          <EditParticipantModal
-            isOpen={isEditModalOpen}
-            onClose={() => setIsEditModalOpen(false)}
-            participant={editingParticipant}
-            onUpdate={handleUpdateParticipant}
-          />
         </div>
 
         {/* Email History Section */}
@@ -911,9 +908,9 @@ export default function Dashboard() {
                 onClick={() => setShowEmailHistory(!showEmailHistory)}
                 className="flex-1 sm:flex-none px-3 md:px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-400/30 rounded-lg transition flex items-center justify-center gap-2 text-sm md:text-base"
               >
-                <span>{showEmailHistory ? 'Sembunyikan' : 'Tampilkan'}</span>
+                <span>{showEmailHistory ? "Sembunyikan" : "Tampilkan"}</span>
                 <svg
-                  className={`w-4 h-4 transition-transform duration-300 ${showEmailHistory ? 'rotate-180' : ''}`}
+                  className={`w-4 h-4 transition-transform duration-300 ${showEmailHistory ? "rotate-180" : ""}`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -965,14 +962,12 @@ export default function Dashboard() {
                       paginatedHistory.map((log: any) => (
                         <tr key={log.id} className="hover:bg-white/5 transition-colors duration-200">
                           <td className="px-6 py-4 whitespace-nowrap text-gray-400">
-                            {new Date(log.sent_at).toLocaleString('id-ID')}
+                            {new Date(log.sent_at).toLocaleString("id-ID")}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-white">{log.email}</td>
-                          <td className="px-6 py-4 whitespace-nowrap font-mono text-blue-300">
-                            {log.participant_unique_id}
-                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap font-mono text-blue-300">{log.participant_unique_id}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-center">
-                            {log.status === 'success' ? (
+                            {log.status === "success" ? (
                               <span className="inline-flex items-center rounded-full bg-green-400/10 px-2.5 py-1 text-xs font-medium text-green-400 ring-1 ring-inset ring-green-400/20">
                                 ✓ Success
                               </span>
@@ -984,14 +979,17 @@ export default function Dashboard() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-center">
                             {log.count > 1 && (
-                              <span className="inline-flex items-center justify-center w-6 h-6 bg-blue-500 text-white text-xs font-bold rounded-full shadow-lg shadow-blue-500/50">
+                              <span className="inline-flex items-center justify-center w-6 h-6 bg-blue-500 text-white text-xs font-bold rounded-full shadow-md shadow-blue-500/50">
                                 {log.count}
                               </span>
                             )}
                             {log.count === 1 && <span className="text-gray-500 text-xs">-</span>}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-red-300 max-w-[200px] truncate" title={log.error_message}>
-                            {log.error_message || '-'}
+                          <td
+                            className="px-6 py-4 whitespace-nowrap text-red-300 max-w-[200px] truncate"
+                            title={log.error_message}
+                          >
+                            {log.error_message || "-"}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right">
                             <button
@@ -1013,23 +1011,27 @@ export default function Dashboard() {
               {totalHistoryPages > 1 && (
                 <div className="flex justify-between items-center mt-4 text-gray-200 font-plus-jakarta-sans text-sm">
                   <button
-                    onClick={() => setHistoryPage(prev => Math.max(prev - 1, 1))}
+                    onClick={() => setHistoryPage((prev) => Math.max(prev - 1, 1))}
                     disabled={historyPage === 1}
-                    className={`px-3 py-1.5 rounded-lg border ${historyPage === 1
-                      ? "border-gray-600 text-gray-600 cursor-not-allowed"
-                      : "border-[#17D3FD]/40 text-[#17D3FD] hover:bg-[#17D3FD]/10"
-                      }`}
+                    className={`px-3 py-1.5 rounded-lg border ${
+                      historyPage === 1
+                        ? "border-gray-600 text-gray-600 cursor-not-allowed"
+                        : "border-[#17D3FD]/40 text-[#17D3FD] hover:bg-[#17D3FD]/10"
+                    }`}
                   >
                     Prev
                   </button>
-                  <span>Page {historyPage} of {totalHistoryPages}</span>
+                  <span>
+                    Page {historyPage} of {totalHistoryPages}
+                  </span>
                   <button
-                    onClick={() => setHistoryPage(prev => Math.min(prev + 1, totalHistoryPages))}
+                    onClick={() => setHistoryPage((prev) => Math.min(prev + 1, totalHistoryPages))}
                     disabled={historyPage === totalHistoryPages}
-                    className={`px-3 py-1.5 rounded-lg border ${historyPage === totalHistoryPages
-                      ? "border-gray-600 text-gray-600 cursor-not-allowed"
-                      : "border-[#17D3FD]/40 text-[#17D3FD] hover:bg-[#17D3FD]/10"
-                      }`}
+                    className={`px-3 py-1.5 rounded-lg border ${
+                      historyPage === totalHistoryPages
+                        ? "border-gray-600 text-gray-600 cursor-not-allowed"
+                        : "border-[#17D3FD]/40 text-[#17D3FD] hover:bg-[#17D3FD]/10"
+                    }`}
                   >
                     Next
                   </button>
@@ -1047,6 +1049,23 @@ export default function Dashboard() {
         success={emailProgress.success}
         failed={emailProgress.failed}
         isBulk={emailProgress.isBulk}
+      />
+      <ManualRegistrationModal
+        isOpen={isManualRegModalOpen}
+        onClose={() => setIsManualRegModalOpen(false)}
+        onSuccess={() => {
+          showToastMessage("✅ Peserta berhasil ditambahkan!", "success");
+          refreshManually();
+        }}
+        onError={(message) => showToastMessage(`❌ ${message}`, "error")}
+      />
+      <UploadModal isOpen={isUploadModalOpen} onClose={() => setIsUploadModalOpen(false)} onUploadSuccess={refreshManually} />
+
+      <EditParticipantModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        participant={editingParticipant}
+        onUpdate={handleUpdateParticipant}
       />
     </main>
   );
