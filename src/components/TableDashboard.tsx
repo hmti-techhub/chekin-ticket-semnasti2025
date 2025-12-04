@@ -208,6 +208,21 @@ function TableDashboard({
                         strokeLinecap="round"
                         strokeLinejoin="round"
                       />
+                    </svg>
+                  </div>
+                  <span className={`text-xs font-medium transition-colors ${participant.mission_card ? 'text-cyan-300' : 'text-gray-500 group-hover:text-gray-400'}`}>
+                    {participant.mission_card}
+                  </span>
+                </label>
+                {participant.present ? (
+                  <label className="inline-flex items-center gap-2 cursor-pointer group">
+                    <div className="relative flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={participant.mission_card}
+                        onChange={(e) => onUpdateMissionCard(participant.unique, e.target.checked)}
+                        className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-white/20 bg-white/5 transition-all checked:border-cyan-500 checked:bg-cyan-500 hover:border-cyan-400"
+                      />
                       <svg
                         className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 transition-opacity peer-checked:opacity-100"
                         width="12"
