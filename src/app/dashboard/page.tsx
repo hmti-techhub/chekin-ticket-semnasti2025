@@ -33,6 +33,18 @@ export default function Dashboard() {
   const [historyPage, setHistoryPage] = useState(1);
   const historyItemsPerPage = 30;
 
+  useEffect(() => {
+    if (isManualRegModalOpen || isUploadModalOpen || isEditModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [isManualRegModalOpen, isUploadModalOpen, isEditModalOpen]);
+
   // Email progress state
   const [emailProgress, setEmailProgress] = useState({
     isOpen: false,
@@ -854,25 +866,6 @@ export default function Dashboard() {
               >
                 Prev
               </button>
-
-              {/* Page numbers */}
-              {/* <div className="flex wrap gap-2">
-                {Array.from({ length: totalPages }).map((_, i) => {
-                  const page = i + 1;
-                  return (
-                    <button
-                      key={page}
-                      onClick={() => goToPage(page)}
-                      className={`px-3 py-1 rounded-md border transition-all ${currentPage === page
-                        ? "bg-[#17D3FD]/20 border-[#17D3FD] text-[#17D3FD] font-semibold"
-                        : "border-gray-600 text-gray-400 hover:bg-white/5"
-                        }`}
-                    >
-                      {page}
-                    </button>
-                  );
-                })}
-              </div> */}
               <span>
                 Page {currentPage} of {totalPages}
               </span>
@@ -890,22 +883,6 @@ export default function Dashboard() {
               </button>
             </div>
           )}
-          <UploadModal isOpen={isUploadModalOpen} onClose={() => setIsUploadModalOpen(false)} onUploadSuccess={refreshManually} />
-          <ManualRegistrationModal
-            isOpen={isManualRegModalOpen}
-            onClose={() => setIsManualRegModalOpen(false)}
-            onSuccess={() => {
-              showToastMessage("✅ Peserta berhasil ditambahkan!", "success");
-              refreshManually();
-            }}
-            onError={(message) => showToastMessage(`❌ ${message}`, "error")}
-          />
-          <EditParticipantModal
-            isOpen={isEditModalOpen}
-            onClose={() => setIsEditModalOpen(false)}
-            participant={editingParticipant}
-            onUpdate={handleUpdateParticipant}
-          />
         </div>
 
         {/* Email History Section */}
@@ -1072,6 +1049,23 @@ export default function Dashboard() {
         success={emailProgress.success}
         failed={emailProgress.failed}
         isBulk={emailProgress.isBulk}
+      />
+      <ManualRegistrationModal
+        isOpen={isManualRegModalOpen}
+        onClose={() => setIsManualRegModalOpen(false)}
+        onSuccess={() => {
+          showToastMessage("✅ Peserta berhasil ditambahkan!", "success");
+          refreshManually();
+        }}
+        onError={(message) => showToastMessage(`❌ ${message}`, "error")}
+      />
+      <UploadModal isOpen={isUploadModalOpen} onClose={() => setIsUploadModalOpen(false)} onUploadSuccess={refreshManually} />
+
+      <EditParticipantModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        participant={editingParticipant}
+        onUpdate={handleUpdateParticipant}
       />
     </main>
   );
