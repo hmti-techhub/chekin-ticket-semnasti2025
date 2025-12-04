@@ -163,39 +163,35 @@ function TableDashboard({ filteredData, emailLogs, onResend, onUpdateKitAndSnack
 
               {/* Mission Card Checkbox */}
               <td className="px-6 py-4 whitespace-nowrap text-center">
-                {participant.present ? (
-                  <label className="inline-flex items-center gap-2 cursor-pointer group">
-                    <div className="relative flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={participant.mission_card}
-                        onChange={(e) => onUpdateMissionCard(participant.unique, e.target.checked)}
-                        className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-white/20 bg-white/5 transition-all checked:border-cyan-500 checked:bg-cyan-500 hover:border-cyan-400"
+                <label className="inline-flex items-center gap-2 cursor-pointer group">
+                  <div className="relative flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={participant.mission_card}
+                      onChange={(e) => onUpdateMissionCard(participant.unique, e.target.checked)}
+                      className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-white/20 bg-white/5 transition-all checked:border-cyan-500 checked:bg-cyan-500 hover:border-cyan-400"
+                    />
+                    <svg
+                      className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 transition-opacity peer-checked:opacity-100"
+                      width="12"
+                      height="12"
+                      viewBox="0 0 12 12"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M10 3L4.5 8.5L2 6"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
                       />
-                      <svg
-                        className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 transition-opacity peer-checked:opacity-100"
-                        width="12"
-                        height="12"
-                        viewBox="0 0 12 12"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M10 3L4.5 8.5L2 6"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </div>
-                    <span className={`text-xs font-medium transition-colors ${participant.mission_card ? 'text-cyan-300' : 'text-gray-500 group-hover:text-gray-400'}`}>
-                      {participant.mission_card ? 'Sudah' : 'Belum'}
-                    </span>
-                  </label>
-                ) : (
-                  <span className="text-gray-600">-</span>
-                )}
+                    </svg>
+                  </div>
+                  <span className={`text-xs font-medium transition-colors ${participant.mission_card ? 'text-cyan-300' : 'text-gray-500 group-hover:text-gray-400'}`}>
+                    {participant.mission_card}
+                  </span>
+                </label>
               </td>
 
               <td className="px-6 py-4 whitespace-nowrap text-right">
